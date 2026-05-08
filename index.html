@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Entregas</title>
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: #ffffff;
+            --text-main: #1c1e21;
+            --text-sub: #65676b;
+            --border-color: #e4e6eb;
+            --card-bg: #f8f9fa;
+            --primary: #007bff;
+        }
+
+        /* Soporte para Modo Oscuro Automático */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #18191a;
+                --container-bg: #242526;
+                --text-main: #e4e6eb;
+                --text-sub: #b0b3b8;
+                --border-color: #3e4042;
+                --card-bg: #3a3b3c;
+                --primary: #4599ff;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            color: var(--text-main);
+        }
+
+        .app-container {
+            background-color: var(--container-bg);
+            width: 100%;
+            max-width: 400px;
+            min-height: 600px;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        h1,
+        h2,
+        h3 {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        h1 {
+            font-size: 26px;
+            margin-bottom: 25px;
+        }
+
+        #contenedor-cursos {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .curso-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .curso-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .curso-titulo {
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 16px;
+        }
+
+        .badge-pendientes {
+            background-color: var(--primary);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .task-item {
+            background-color: var(--container-bg);
+            border-left: 4px solid var(--primary);
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+
+        .task-item.completada {
+            border-left-color: #28a745;
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        .task-item.descartada {
+            opacity: 0.5;
+        }
+
+        .task-item.descartada .task-name {
+            text-decoration: line-through;
+        }
+
+        .task-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .task-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .task-date {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 15px;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+        }
+
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            width: 100%;
+        }
+
+        .btn-primario {
+            background-color: var(--primary);
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .btn-secundario {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            margin-top: auto;
+        }
+
+        .btn-exito {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-cancelar {
+            background-color: transparent;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+
+        .btn-descartar {
+            background-color: #65676b;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .pantalla {
+            display: none;
+        }
+
+        .pantalla.activa {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.activo {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--container-bg);
+            width: 85%;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .btn-curso-modal {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            text-align: left;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <div id="pantalla-inicio" class="pantalla activa">
+            <h1>Mis Entregas</h1>
+            <button class="btn-primario" onclick="navegar('pantalla-tarea')">+ Nueva Tarea</button>
+            <div id="contenedor-cursos"></div>
+            <button class="btn-secundario" onclick="navegar('pantalla-curso')">+ Añadir Curso</button>
+        </div>
+
+        <div id="pantalla-curso" class="pantalla">
+            <h2>Nuevo Curso</h2>
+            <div class="form-group">
+                <input type="text" id="inputNuevoCurso" placeholder="Nombre de la materia...">
+                <button class="btn-exito" onclick="guardarCurso()">Guardar Curso</button>
+                <button class="btn-cancelar" onclick="navegar('pantalla-inicio')">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="pantalla-tarea" class="pantalla">
+            <h2>Detalles de la Tarea</h2>
+            <div class="form-group">
+                <input type="text" id="inputNuevaEntrega" placeholder="Nombre de la tarea...">
+                <div style="display:flex; gap:10px;">
+                    <input type="date" id="inputFechaEntrega" style="flex:1">
+                    <input type="time" id="inputHoraEntrega" style="flex:1">
+                </div>
+                <textarea id="inputComentario" placeholder="Comentario (opcional)..." maxlength="100"
+                    rows="3"></textarea>
+                <button class="btn-primario" onclick="prepararAsignacion()">Elegir Curso...</button>
+                <button class="btn-cancelar" onclick="navegar('pantalla-inicio')">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="modal-asignar" class="modal-overlay">
+            <div class="modal-content">
+                <h3>Asignar a...</h3>
+                <div id="contenedor-botones-cursos"></div>
+                <button class="btn-cancelar" onclick="cerrarModal('modal-asignar')">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="modal-info" class="modal-overlay">
+            <div class="modal-content">
+                <h3 id="info-titulo"></h3>
+                <p id="info-detalle" style="font-size: 14px;"></p>
+                <p id="info-comentario" style="font-style: italic; color: var(--text-sub);"></p>
+                <button class="btn-exito" id="btn-completar">Completado</button>
+                <button class="btn-descartar" id="btn-descartar">Descartar</button>
+                <button class="btn-cancelar" style="margin-top:10px;"
+                    onclick="cerrarModal('modal-info')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cargar datos al iniciar
+        let datosApp = JSON.parse(localStorage.getItem('entregas_db')) || { cursos: [] };
+        let tareaTemporal = {};
+        let idTareaSeleccionada = null;
+
+        function guardarEnStorage() {
+            localStorage.setItem('entregas_db', JSON.stringify(datosApp));
+            renderizarCursos();
+        }
+
+        function navegar(id) {
+            document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+            document.getElementById(id).classList.add('activa');
+        }
+
+        function guardarCurso() {
+            const nom = document.getElementById('inputNuevoCurso').value;
+            if (!nom.trim()) return;
+            datosApp.cursos.push({ id: 'c' + Date.now(), nombre: nom, tareas: [] });
+            document.getElementById('inputNuevoCurso').value = '';
+            guardarEnStorage();
+            navegar('pantalla-inicio');
+        }
+
+        function renderizarCursos() {
+            const cont = document.getElementById('contenedor-cursos');
+            cont.innerHTML = datosApp.cursos.length ? '' : '<p style="text-align:center; color:gray; margin-top:50px;">No hay cursos.</p>';
+
+            datosApp.cursos.forEach(curso => {
+                // Ordenar tareas por fecha antes de mostrar
+                curso.tareas.sort((a, b) => new Date(a.fec + 'T' + a.hor) - new Date(b.fec + 'T' + b.hor));
+
+                const pendientes = curso.tareas.filter(t => t.estado === 'pendiente').length;
+                const card = document.createElement('div');
+                card.className = 'curso-card';
+                card.innerHTML = `
+                    <div class="curso-header">
+                        <span class="curso-titulo">📁 ${curso.nombre}</span>
+                        ${pendientes > 0 ? `<span class="badge-pendientes">${pendientes}</span>` : ''}
+                    </div>
+                    <div id="list-${curso.id}"></div>
+                `;
+                cont.appendChild(card);
+
+                const lista = card.querySelector(`#list-${curso.id}`);
+                curso.tareas.forEach(tarea => {
+                    const item = document.createElement('div');
+                    item.className = `task-item ${tarea.estado}`;
+                    item.innerHTML = `
+                        <div class="task-info">
+                            <span class="task-name">${tarea.nom}</span>
+                            <span class="task-date">📅 ${tarea.fec} - ${tarea.hor}</span>
+                        </div>
+                        <span>${tarea.estado === 'completada' ? '✅' : 'ℹ️'}</span>
+                    `;
+                    item.onclick = () => verInfo(curso.id, tarea.id);
+                    lista.appendChild(item);
+                });
+            });
+        }
+
+        function prepararAsignacion() {
+            const nom = document.getElementById('inputNuevaEntrega').value;
+            const fec = document.getElementById('inputFechaEntrega').value;
+            const hor = document.getElementById('inputHoraEntrega').value;
+            if (!nom || !fec || !hor) return alert("Faltan datos");
+
+            tareaTemporal = { nom, fec, hor, com: document.getElementById('inputComentario').value };
+            const cont = document.getElementById('contenedor-botones-cursos');
+            cont.innerHTML = '';
+            datosApp.cursos.forEach(c => {
+                const b = document.createElement('button');
+                b.className = 'btn-curso-modal';
+                b.innerText = c.nombre;
+                b.onclick = () => finalizarTarea(c.id);
+                cont.appendChild(b);
+            });
+            document.getElementById('modal-asignar').classList.add('activo');
+        }
+
+        function finalizarTarea(idCurso) {
+            const curso = datosApp.cursos.find(c => c.id === idCurso);
+            curso.tareas.push({ ...tareaTemporal, id: 't' + Date.now(), estado: 'pendiente' });
+            cerrarModal('modal-asignar');
+            document.getElementById('inputNuevaEntrega').value = '';
+            guardarEnStorage();
+            navegar('pantalla-inicio');
+        }
+
+        function verInfo(idC, idT) {
+            const curso = datosApp.cursos.find(c => c.id === idC);
+            const tarea = curso.tareas.find(t => t.id === idT);
+            idTareaSeleccionada = { idC, idT };
+
+            document.getElementById('info-titulo').innerText = tarea.nom;
+            document.getElementById('info-detalle').innerText = `Vence: ${tarea.fec} a las ${tarea.hor}\nMateria: ${curso.nombre}`;
+            document.getElementById('info-comentario').innerText = tarea.com || "Sin comentarios.";
+
+            document.getElementById('btn-completar').onclick = () => cambiarEstado('completada');
+            document.getElementById('btn-descartar').onclick = () => cambiarEstado('descartada');
+            document.getElementById('modal-info').classList.add('activo');
+        }
+
+        function cambiarEstado(nuevoEstado) {
+            const curso = datosApp.cursos.find(c => c.id === idTareaSeleccionada.idC);
+            const tarea = curso.tareas.find(t => t.id === idTareaSeleccionada.idT);
+            tarea.estado = nuevoEstado;
+            cerrarModal('modal-info');
+            guardarEnStorage();
+        }
+
+        function cerrarModal(id) { document.getElementById(id).classList.remove('activo'); }
+
+        // Render inicial
+        renderizarCursos();
+    </script>
+</body>
+
+</html>
