@@ -1,0 +1,16 @@
+{
+    "name": "Mis Entregas",
+    "short_name": "Entregas",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#f0f2f5",
+    "theme_color": "#007bff",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3209/3209265.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
